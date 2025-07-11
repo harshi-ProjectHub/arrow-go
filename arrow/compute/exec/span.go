@@ -382,6 +382,9 @@ func (a *ArraySpan) FillFromScalar(val scalar.Scalar) {
 		switch sc := val.(type) {
 		case *scalar.DenseUnion:
 			codes[0] = sc.TypeCode
+			// Store type code and offset in little-endian format for consistency
+			a.Scratch[0] = uint64(sc.TypeCode)
+			a.Scratch[1] = 1
 			// has offset, start 4 bytes in so it's aligned to the 32-bit boundaries
 			off := unsafe.Slice((*int32)(unsafe.Add(unsafe.Pointer(&a.Scratch[0]), arrow.Int32SizeBytes)), 2)
 			setOffsetsForScalar(a, off, 1, 2)
@@ -398,6 +401,9 @@ func (a *ArraySpan) FillFromScalar(val scalar.Scalar) {
 			}
 		case *scalar.SparseUnion:
 			codes[0] = sc.TypeCode
+			// Store type code in little-endian format for consistency
+			a.Scratch[0] = uint64(sc.TypeCode)
+			a.Scratch[1] = 0
 			// sparse union scalars have a full complement of child values
 			// even though only one of them is relevant, so we just fill them
 			// in here
